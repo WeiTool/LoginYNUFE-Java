@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">LoginYNUFE</string>
+    <string-array name="regions">
+        <item>宿舍区域</item>
+        <item>教学区域</item>
+    </string-array>
+    <string name="delete_confirm_title">操作确认</string>
+    <string name="delete_single_message">确定要删除该账户吗？</string>
+    <string name="delete_all_message">确定要删除所有账户吗？</string>
+    <string name="confirm">确定</string>
+    <string name="cancel">取消</string>
+</resources>

@@ -1,0 +1,35 @@
+# 编译生成文件
+*.apk       # APK 安装包文件 [1,2](@ref)
+*.ap_       # APK 资源压缩包
+*.dex       # Dalvik 虚拟机可执行文件
+*.class     # Java 编译后的类文件 [1](@ref)
+
+# 构建系统目录
+.gradle/    # Gradle 缓存和配置 [2,6](@ref)
+build/      # 构建输出目录（适用于根目录和模块目录）[2,7](@ref)
+gen/        # 自动生成的代码目录（旧版 ADT）[1](@ref)
+captures/   # Android Studio 屏幕录制文件 [2](@ref)
+
+# IDE 配置文件
+.idea/      # Android Studio 项目配置 [3,5](@ref)
+*.iml       # IntelliJ 模块文件 [3](@ref)
+.local/     # 本地运行配置
+.externalNativeBuild/ # NDK 构建文件 [5](@ref)
+
+# 系统文件
+.DS_Store   # macOS 目录元数据 [2,7](@ref)
+Thumbs.db   # Windows 缩略图缓存 [3](@ref)
+
+# 本地配置文件
+local.properties  # SDK 路径等本地配置 [1,6](@ref)
+*.keystore        # 应用签名证书 [6](@ref)
+*.jks            # Java KeyStore 文件 [3](@ref)
+
+# 日志与临时文件
+*.log       # 各类日志文件 [2](@ref)
+*.tmp       # 临时文件
+*.bak       # 备份文件
+
+# 其他
+proguard/   # ProGuard 混淆输出 [2](@ref)
+.navigation/ # Android Studio 导航缓存 [2](@ref)
