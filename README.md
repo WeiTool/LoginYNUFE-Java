@@ -43,7 +43,7 @@
   `AccountAdapter` 和 `LogsAdapter`
 
 ## 📦 安装指南
-仅仅支持Android系统，项目的[releases](https://gitee.com/weitool/login-ynufe-java/releases)当中
+仅仅支持Android系统，项目的[releases](https://github.com/WeiTool/LoginYNUFE-Java/releases)当中
 
 ## 🎮 使用说明
 
