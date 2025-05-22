@@ -1,18 +1,40 @@
 package com.srun.loginynufe.model;
 
+import androidx.room.ColumnInfo;
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
+import androidx.room.TypeConverters;
+
+import com.srun.loginynufe.data.ListConverter;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
+@Entity(tableName = "accounts")
+@TypeConverters(ListConverter.class)
 public class Account {
-    private final String username; // 学号+区域（如202305006401@ctc）
+    @PrimaryKey(autoGenerate = true)
+    private int id;
+
+    @ColumnInfo(name = "username")
+    private final String username;
+
+    @ColumnInfo(name = "encrypted_password")
     private final String password;
+
+    @ColumnInfo(name = "region")
     private final String region;
+
+    @ColumnInfo(name = "client_ip")
     private String clientIp;
+
+    @ColumnInfo(name = "is_logged_in")
     private boolean isLoggedIn;
+
+    @ColumnInfo(name = "logs")
     private List<String> logs = new ArrayList<>();
 
     public Account(String username, String password, String region) {
@@ -22,7 +44,14 @@ public class Account {
         this.isLoggedIn = false;
     }
 
-    // Getters 和 Setters
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
     public String getUsername() {
         return username;
     }
@@ -49,6 +78,10 @@ public class Account {
 
     public void setClientIp(String clientIp) {
         this.clientIp = clientIp;
+    }
+
+    public void setLogs(List<String> logs) {
+        this.logs = logs;
     }
 
     public List<String> getLogs() {

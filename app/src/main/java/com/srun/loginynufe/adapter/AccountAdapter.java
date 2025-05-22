@@ -40,36 +40,46 @@ public class AccountAdapter extends RecyclerView.Adapter<AccountAdapter.ViewHold
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Account account = accounts.get(position);
+        bindBaseData(holder, account);
+        setupClickListeners(holder, position, account);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position, @NonNull List<Object> payloads) {
+        Account account = accounts.get(position);
+        bindBaseData(holder, account); // 统一使用参数 `account` 保证数据一致性
+
+        // 局部更新逻辑
+        if (!payloads.isEmpty()) {
+            for (Object payload : payloads) {
+                if (payload instanceof String && payload.equals("UPDATE_IP_AND_STATUS")) {
+                    String ipDisplay = (account.getClientIp() != null && !account.getClientIp().isEmpty())
+                            ? "IP: " + account.getClientIp()
+                            : "IP: 未获取";
+                    holder.tvIp.setText(ipDisplay);
+                }
+            }
+        }
+
+        // 关键修复：在 payload 版本中重新绑定点击事件
+        setupClickListeners(holder, position, account);
+    }
+
+    private void bindBaseData(ViewHolder holder, Account account) {
         holder.tvUsername.setText(account.getUsername().split("@")[0]);
         holder.tvRegion.setText(account.getRegion());
-
         String ipDisplay = (account.getClientIp() != null && !account.getClientIp().isEmpty())
                 ? "IP: " + account.getClientIp()
                 : "IP: 未获取";
         holder.tvIp.setText(ipDisplay);
+    }
 
-        // 绑定点击事件
+    private void setupClickListeners(ViewHolder holder, int position, Account account) {
+        // 绑定最新数据和位置
         holder.btnLogin.setOnClickListener(v -> listener.onLoginClick(account));
-        holder.btnLogout.setOnClickListener(v -> {
-            account.setClientIp(null);
-            notifyItemChanged(position);
-            listener.onLogoutClick(account);
-        });
-
-        holder.btnDelete.setOnClickListener(v -> {
-            int currentPosition = holder.getAdapterPosition();
-            if (currentPosition != RecyclerView.NO_POSITION) {
-                listener.onDeleteClick(currentPosition);
-            }
-        });
-
-        holder.btnLogs.setOnClickListener(v -> {
-            int currentPos = holder.getAdapterPosition();
-            if (currentPos != RecyclerView.NO_POSITION) {
-                listener.onShowLogsClick(accounts.get(currentPos));
-            }
-        });
-
+        holder.btnLogout.setOnClickListener(v -> listener.onLogoutClick(account));
+        holder.btnDelete.setOnClickListener(v -> listener.onDeleteClick(position));
+        holder.btnLogs.setOnClickListener(v -> listener.onShowLogsClick(account));
         holder.itemView.setOnClickListener(v -> listener.onItemClick(account));
     }
 

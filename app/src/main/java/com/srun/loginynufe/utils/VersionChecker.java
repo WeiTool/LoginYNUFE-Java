@@ -1,7 +1,6 @@
 package com.srun.loginynufe.utils;
 
-import static android.os.AsyncTask.execute;
-
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -62,7 +61,7 @@ public class VersionChecker {
      * @param context 上下文对象（需为Activity上下文）
      */
     public static void checkNewVersion(Context context) {
-        execute(() -> {
+        AppExecutors.get().networkIO().execute(() -> {
             try {
                 OkHttpClient client = new OkHttpClient.Builder()
                         .connectTimeout(15, TimeUnit.SECONDS)
@@ -208,6 +207,7 @@ public class VersionChecker {
      * @param context 上下文对象
      * @param downloadUrl APK下载地址
      */
+    @SuppressLint("QueryPermissionsNeeded")
     private static void openBrowserForDownload(Context context, String downloadUrl) {
         try {
             Intent intent = new Intent(Intent.ACTION_VIEW);

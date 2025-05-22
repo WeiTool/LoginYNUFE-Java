@@ -1,12 +1,7 @@
 package com.srun.loginynufe;
 
 import android.app.AlertDialog;
-import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -17,53 +12,53 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.srun.loginynufe.adapter.AccountAdapter;
-import com.srun.loginynufe.data.AccountManager;
+import com.srun.loginynufe.data.AppDatabase;
+import com.srun.loginynufe.data.AccountDao;
 import com.srun.loginynufe.dialog.AccountDialog;
 import com.srun.loginynufe.encryption.LoginLogout;
 import com.srun.loginynufe.model.Account;
 import com.srun.loginynufe.adapter.LogsAdapter;
+import com.srun.loginynufe.utils.AppExecutors;
 import com.srun.loginynufe.utils.VersionChecker;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.util.List;
 import java.util.Map;
 
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-
 public class MainActivity extends AppCompatActivity implements AccountAdapter.OnItemClickListener {
     private AccountAdapter adapter;
     private List<Account> accounts;
-
+    private AccountDao accountDao;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // 初始化RecyclerView
+        // 初始化 Room 数据库
+        AppDatabase db = AppDatabase.getInstance(this);
+        accountDao = db.accountDao();
+
+        // 初始化 RecyclerView
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        // 加载数据
-        accounts = AccountManager.getAccounts(this);
-        adapter = new AccountAdapter(accounts, this);
-        recyclerView.setAdapter(adapter);
+        // 异步加载账户数据
+        AppExecutors.get().diskIO().execute(() -> {
+            accounts = accountDao.getAll();
+            AppExecutors.get().mainThread().execute(() -> {
+                adapter = new AccountAdapter(accounts, this);
+                recyclerView.setAdapter(adapter);
+            });
+        });
 
-        // FAB点击事件
+        // FAB 添加账户
         FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(v -> showAddAccountDialog());
 
+        // 删除所有账户
         com.google.android.material.button.MaterialButton btnDeleteAll = findViewById(R.id.btnDeleteAll);
         btnDeleteAll.setOnClickListener(v ->
-                showDeleteConfirmDialog("确定要删除所有账户吗？", () -> {
-                    accounts.clear();
-                    AccountManager.saveAccounts(this, accounts);
-                    adapter.notifyDataSetChanged();
-                })
+                showDeleteConfirmDialog("确定要删除所有账户吗？", this::deleteAllAccounts)
         );
 
         VersionChecker.checkNewVersion(this);
@@ -72,111 +67,158 @@ public class MainActivity extends AppCompatActivity implements AccountAdapter.On
     private void showAddAccountDialog() {
         AccountDialog dialog = new AccountDialog(
                 this,
-                account -> {
-                    accounts.add(account);
-                    AccountManager.saveAccounts(this, accounts);
-                    adapter.notifyItemInserted(accounts.size() - 1);
-                },
+                newAccount -> AppExecutors.get().diskIO().execute(() -> {
+                    try {
+                        accountDao.insert(newAccount);
+                        List<Account> updatedAccounts = accountDao.getAll();
+
+                        AppExecutors.get().mainThread().execute(() -> {
+                            accounts.clear();
+                            accounts.addAll(updatedAccounts);
+                            adapter.notifyItemInserted(accounts.size() - 1);
+                            Toast.makeText(this, "添加成功", Toast.LENGTH_SHORT).show();
+                        });
+                    } catch (Exception e) {
+                        AppExecutors.get().mainThread().execute(() ->
+                                Toast.makeText(this, "添加失败: " + e.getMessage(), Toast.LENGTH_LONG).show()
+                        );
+                    }
+                }),
                 false,
                 null
         );
         dialog.show();
     }
 
+    // 点击账户项（编辑）
     @Override
     public void onItemClick(Account account) {
         AccountDialog dialog = new AccountDialog(
                 this,
-                newAccount -> {
-                    int index = accounts.indexOf(account);
-                    if (index != -1) {
-                        accounts.set(index, newAccount);
-                        AccountManager.saveAccounts(this, accounts);
-                        adapter.notifyItemChanged(index);
-                    }
-                },
+                updatedAccount -> AppExecutors.get().diskIO().execute(() -> {
+                    accountDao.update(updatedAccount);
+                    AppExecutors.get().mainThread().execute(() -> {
+                        // 找到账户在列表中的位置
+                        int index = accounts.indexOf(account);
+                        if (index != -1) {
+                            accounts.set(index, updatedAccount); // 更新列表数据
+                            adapter.notifyItemChanged(index); // 局部刷新
+                        }
+                    });
+                }),
                 true,
                 account
         );
         dialog.show();
     }
 
+    // 登录操作
     @Override
     public void onLoginClick(Account account) {
         LoginLogout.performLogin(account, result -> {
-            // 将 toast 信息直接合并到原始 result 中
-            result.put("toast_message", "ok".equalsIgnoreCase(getStringFromMap(result, "error", "unknown_error"))
-                    ? "登录成功：" + getStringFromMap(result, "suc_msg", "操作成功")
-                    : "登录失败：" + getStringFromMap(result, "error_msg", "未知错误"));
-
-            // 仅添加一次登录日志
             account.addLoginLog(result);
-            AccountManager.saveAccounts(this, accounts);
-
-            if ("ok".equalsIgnoreCase(getStringFromMap(result, "error", ""))) {
-                account.setLoggedIn(true);
-                adapter.notifyItemChanged(accounts.indexOf(account));
-                Toast.makeText(this, getStringFromMap(result, "toast_message", ""), Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, getStringFromMap(result, "toast_message", ""), Toast.LENGTH_LONG).show();
-            }
+            // 仅执行登录逻辑，不修改按钮状态
+            AppExecutors.get().diskIO().execute(() -> {
+                accountDao.update(account);
+                AppExecutors.get().mainThread().execute(() -> {
+                    int index = accounts.indexOf(account);
+                    if (index != -1) {
+                        adapter.notifyItemChanged(index, "UPDATE_IP_AND_STATUS");
+                    }
+                    showToast(result, "登录成功", "登录失败");
+                });
+            });
         });
     }
 
+    // 登出操作
     @Override
     public void onLogoutClick(Account account) {
         LoginLogout.performLogout(account, result -> {
-            // 将 toast 信息合并到原始 result
-            result.put("toast_message", "ok".equalsIgnoreCase(getStringFromMap(result, "error", "unknown_error"))
-                    ? "登出成功：" + getStringFromMap(result, "suc_msg", "操作成功")
-                    : "登出失败：" + getStringFromMap(result, "error_msg", "未知错误"));
-
-            // 仅添加一次登出日志
             account.addLogoutLog(result);
-            AccountManager.saveAccounts(this, accounts);
-
-            if ("ok".equalsIgnoreCase(getStringFromMap(result, "error", ""))) {
-                account.setLoggedIn(false);
-                adapter.notifyItemChanged(accounts.indexOf(account));
-                Toast.makeText(this, getStringFromMap(result, "toast_message", ""), Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, getStringFromMap(result, "toast_message", ""), Toast.LENGTH_LONG).show();
-            }
+            // 仅执行登出逻辑，不修改按钮状态
+            AppExecutors.get().diskIO().execute(() -> {
+                accountDao.update(account);
+                AppExecutors.get().mainThread().execute(() -> {
+                    int index = accounts.indexOf(account);
+                    if (index != -1) {
+                        // 可选：触发局部刷新（如果其他数据需要更新）
+                        adapter.notifyItemChanged(index, "UPDATE_IP_AND_STATUS");
+                    }
+                    showToast(result, "登出成功", "登出失败");
+                });
+            });
         });
     }
 
+    // 删除单个账户
     @Override
     public void onDeleteClick(int position) {
-        showDeleteConfirmDialog("确定要删除该账户吗？", () -> {
-            accounts.remove(position);
-            AccountManager.saveAccounts(this, accounts);
-            adapter.notifyItemRemoved(position);
-        });
+        showDeleteConfirmDialog("确定要删除该账户吗？", () ->
+                AppExecutors.get().diskIO().execute(() -> {
+                    Account account = accounts.get(position);
+                    accountDao.delete(account);
+                    AppExecutors.get().mainThread().execute(() -> {
+                        accounts.remove(position); // 更新数据源
+                        adapter.notifyItemRemoved(position); // 通知 Adapter 刷新
+                    });
+                })
+        );
     }
 
+    // 显示操作日志
     @Override
     public void onShowLogsClick(Account account) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("详细操作日志 - " + account.getUsername().split("@")[0]);
+        builder.setTitle("操作日志 - " + account.getUsername().split("@")[0]);
 
         View view = getLayoutInflater().inflate(R.layout.dialog_logs, null);
         RecyclerView rvLogs = view.findViewById(R.id.rvLogs);
         rvLogs.setLayoutManager(new LinearLayoutManager(this));
-        LogsAdapter adapter = new LogsAdapter(account.getLogs()); // 创建适配器
-        rvLogs.setAdapter(adapter);
+        LogsAdapter logsAdapter = new LogsAdapter(account.getLogs());
+        rvLogs.setAdapter(logsAdapter);
 
         Button btnClear = view.findViewById(R.id.btnClearLogs);
-        btnClear.setOnClickListener(v -> {
-            account.getLogs().clear();
-            AccountManager.saveAccounts(this, accounts);
-            adapter.notifyDataSetChanged();
-            Toast.makeText(this, "日志已清除", Toast.LENGTH_SHORT).show();
-        });
-
-        builder.setView(view);
-        builder.show();
+        btnClear.setOnClickListener(v ->
+                AppExecutors.get().diskIO().execute(() -> {
+                    account.getLogs().clear();
+                    accountDao.update(account);
+                    AppExecutors.get().mainThread().execute(() -> {
+                        int position = accounts.indexOf(account);
+                        if (position != -1) {
+                            adapter.notifyItemChanged(position);
+                        }
+                        Toast.makeText(this, "日志已清除", Toast.LENGTH_SHORT).show();
+                    });
+                })
+        );
+        builder.setView(view).show();
     }
 
+    // 删除所有账户
+    private void deleteAllAccounts() {
+        AppExecutors.get().diskIO().execute(() -> {
+            accountDao.deleteAll();
+            AppExecutors.get().mainThread().execute(() -> {
+                int previousSize = accounts.size();
+                accounts.clear();
+                if (previousSize > 0) {
+                    adapter.notifyItemRangeRemoved(0, previousSize);
+                }
+            });
+        });
+    }
+
+    // 显示Toast提示
+    private void showToast(Map<String, Object> result, String successPrefix, String failPrefix) {
+        String message = getStringFromMap(result, "toast_message",
+                "ok".equalsIgnoreCase(getStringFromMap(result, "error", "")) ?
+                        successPrefix : failPrefix
+        );
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+
+    // 显示确认对话框
     private void showDeleteConfirmDialog(String message, Runnable confirmAction) {
         new AlertDialog.Builder(this)
                 .setTitle("操作确认")
@@ -186,20 +228,13 @@ public class MainActivity extends AppCompatActivity implements AccountAdapter.On
                 .show();
     }
 
-    /**
-     * 安全地从 Map 中获取字符串字段值
-     *
-     * @param map          数据源
-     * @param key          字段名
-     * @param defaultValue 默认值
-     * @return 字段值（或默认值）
-     */
+// 安全获取 Map 中的字符串（修复空指针问题）
     private String getStringFromMap(Map<String, Object> map, String key, String defaultValue) {
         if (map == null || !map.containsKey(key)) {
-            return defaultValue;
+            return defaultValue; // Map 为 null 或键不存在时返回默认值
         }
+
         Object value = map.get(key);
-        // 处理不同数据类型（如服务器返回数字时转为字符串）
-        return (value != null) ? value.toString() : defaultValue;
+        return (value != null) ? value.toString() : defaultValue; // 值为 null 时也返回默认值
     }
 }

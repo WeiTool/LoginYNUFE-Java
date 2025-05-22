@@ -1,8 +1,5 @@
 package com.srun.loginynufe.encryption;
 
-
-import android.os.Handler;
-import android.os.Looper;
 import com.google.gson.reflect.TypeToken;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -11,9 +8,9 @@ import java.io.UnsupportedEncodingException;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import com.google.gson.Gson;
 import com.srun.loginynufe.model.Account;
+import com.srun.loginynufe.utils.AppExecutors;
 
 public class LoginLogout {
     /***
@@ -32,8 +29,8 @@ public class LoginLogout {
     private static final String ENC_VER = "srun_bx1";
     // 用户类型参数
     private static final int UTYPE = 1;
-    private static final Executor NETWORK_EXECUTOR = Executors.newFixedThreadPool(4);
-    private static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
+    private static final Executor NETWORK_EXECUTOR = AppExecutors.get().networkIO();
+
     public static void performLogin(Account account, OnLoginListener listener) {
         NETWORK_EXECUTOR.execute(() -> {
             // 后台执行网络请求
@@ -45,7 +42,7 @@ public class LoginLogout {
             }
 
             // 切换到主线程回调
-            MAIN_HANDLER.post(() -> {
+            AppExecutors.get().mainThread().execute(() -> {
                 if (listener != null) {
                     listener.onLoginResult(result);
                 }
@@ -59,7 +56,7 @@ public class LoginLogout {
             Map<String, Object> result = logout(account.getUsername(), "", true);
 
             // 切换到主线程回调
-            MAIN_HANDLER.post(() -> {
+            AppExecutors.get().mainThread().execute(() -> {
                 if (listener != null) {
                     listener.onLogoutResult(result);
                 }
@@ -83,28 +80,22 @@ public class LoginLogout {
             // 自动检测IP逻辑
             if (autoDetect && (clientIp == null || clientIp.isEmpty())) {
                 clientIp = detectIp(username); // 调用IP检测方法
-                System.out.println("自动检测到 IP: " + clientIp); // 调试输出
             }
 
             // 获取挑战令牌和服务器IP
             Map<String, String> challengeData = getChallenge(username, clientIp);
             String token = challengeData.get("challenge"); // 从响应中提取token
-            System.out.println("获取到的token为:" + token); // 调试输出
             String updatedIp = challengeData.get("online_ip"); // 从响应中提取IP
 
             // 检查IP是否需要更新
             if (!updatedIp.equals(clientIp)) {
-                System.out.println("服务器返回更新 IP: " + updatedIp); // 调试输出
                 clientIp = updatedIp; // 更新客户端IP
             }
 
             // 加密处理
             String hmd5 = Md5.md5(password, token); // 生成MD5哈希密码
-            System.out.println("获取到的加密密码(没有加{MD5}修饰)为:"+hmd5); // 调试输出
             String info = getInfo(username, password, clientIp, token); // 构造加密的info字段
-            System.out.println("获取到的info为:"+info); // 调试输出
             String chksum = Sha1.Sha1(username, hmd5, AC_ID, clientIp, N, UTYPE, info, token); // 生成SHA1校验和
-            System.out.println("获取到的校验码chksum为:"+chksum); // 调试输出
 
             // 构建并发送登录请求
             String url = buildLoginUrl(username, hmd5, clientIp, info, chksum); // 拼接登录URL
@@ -127,8 +118,7 @@ public class LoginLogout {
         try {
             // 自动检测IP逻辑
             if (autoDetect && (clientIp == null || clientIp.isEmpty())) {
-                clientIp = detectIp(username); // 复用IP检测方法
-                System.out.println("自动检测到 IP: " + clientIp);
+                clientIp = detectIp(username);
             }
 
             // 构建注销URL
@@ -152,11 +142,10 @@ public class LoginLogout {
                 "{\"username\":\"%s\",\"password\":\"%s\",\"ip\":\"%s\",\"acid\":%d,\"enc_ver\":\"%s\"}",
                 username, password, ip, AC_ID, ENC_VER
         );
-        // 使用XEncoder进行加密
-        byte[] xenBytes = XEncoder.xEncode(infoJson, token);
-        // 自定义Base64编码并添加前缀
-        CustomB64Encoder encoder = new CustomB64Encoder();
-        return "{SRBX1}" + encoder.encode(xenBytes);
+        // 使用Encode进行加密
+        byte[] enBytes = Encode.encode(infoJson, token);
+        // 使用Base64Utils进行编码并添加前缀
+        return "{SRBX1}" + Base64.customB64encode(enBytes);
     }
 
     /***

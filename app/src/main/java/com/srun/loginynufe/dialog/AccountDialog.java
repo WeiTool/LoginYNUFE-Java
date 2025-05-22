@@ -66,7 +66,8 @@ public class AccountDialog extends Dialog {
                 return;
             }
 
-            String suffix = region.equals("宿舍区域") ? "@ctc" : "@ynufe";
+            String[] regions = getContext().getResources().getStringArray(R.array.regions);
+            String suffix = region.equals(regions[0]) ? "@ctc" : "@ynufe";
             String username = studentId + suffix;
             Account newAccount = new Account(username, password, region);
 
