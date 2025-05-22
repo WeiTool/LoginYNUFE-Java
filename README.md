@@ -28,9 +28,9 @@
 
 ### 核心组件
 - **加密模块**  
-  `LoginLogout.java` 实现SRUN协议的MD5/SHA1/XEncode加密
+  `LoginLogout.java` 实现SRUN协议的MD5/SHA1/Encode/Base64加密
 - **数据持久化**  
-  `AccountManager.java` 使用SharedPreferences存储账户数据
+使用Room数据库存储账户数据
 - **网络通信**- **网络通信**  
   `OkHttp3` 实现Gitee API版本检查
 
