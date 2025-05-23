@@ -49,6 +49,13 @@
                     android:layout_height="wrap_content"
                     android:minLines="1"
                     android:textColor="@android:color/darker_gray" />
+
+                <TextView
+                    android:id="@+id/tvOnlineDevices"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@android:color/darker_gray"
+                    android:text="总在线设备：0"/>
             </LinearLayout>
 
             <!-- 右侧按钮区（50%宽度） -->

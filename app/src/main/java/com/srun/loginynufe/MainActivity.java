@@ -1,6 +1,7 @@
 package com.srun.loginynufe;
 
 import android.app.AlertDialog;
+import android.icu.text.IDNA;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -117,7 +118,6 @@ public class MainActivity extends AppCompatActivity implements AccountAdapter.On
     public void onLoginClick(Account account) {
         LoginLogout.performLogin(account, result -> {
             account.addLoginLog(result);
-            // 仅执行登录逻辑，不修改按钮状态
             AppExecutors.get().diskIO().execute(() -> {
                 accountDao.update(account);
                 AppExecutors.get().mainThread().execute(() -> {
@@ -128,6 +128,24 @@ public class MainActivity extends AppCompatActivity implements AccountAdapter.On
                     showToast(result, "登录成功", "登录失败");
                 });
             });
+
+            AppExecutors.get().networkIO().execute(() ->{
+                Map<String,Object> userInfo = LoginLogout.getRadUserInfo();
+                if (userInfo.containsKey("online_device_total")){
+                    String onlineTotal = (String) userInfo.get("online_device_total");
+                    account.setOnlineDevices(Integer.parseInt(onlineTotal));
+
+                    AppExecutors.get().diskIO().execute(() ->{
+                        accountDao.update(account);
+                        AppExecutors.get().mainThread().execute(() ->{
+                            int index = accounts.indexOf(account);
+                            if (index != -1) {
+                                adapter.notifyItemChanged(index);
+                            }
+                        });
+                    });
+                }
+            });
         });
     }
 
@@ -136,13 +154,11 @@ public class MainActivity extends AppCompatActivity implements AccountAdapter.On
     public void onLogoutClick(Account account) {
         LoginLogout.performLogout(account, result -> {
             account.addLogoutLog(result);
-            // 仅执行登出逻辑，不修改按钮状态
             AppExecutors.get().diskIO().execute(() -> {
                 accountDao.update(account);
                 AppExecutors.get().mainThread().execute(() -> {
                     int index = accounts.indexOf(account);
                     if (index != -1) {
-                        // 可选：触发局部刷新（如果其他数据需要更新）
                         adapter.notifyItemChanged(index, "UPDATE_IP_AND_STATUS");
                     }
                     showToast(result, "登出成功", "登出失败");

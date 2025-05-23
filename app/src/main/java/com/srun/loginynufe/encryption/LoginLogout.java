@@ -21,6 +21,8 @@ public class LoginLogout {
     private static final String GET_CHALLENGE_API = "http://172.16.130.31/cgi-bin/get_challenge";
     // 登录认证的API地址
     private static final String SRUN_PORTAL_API = "http://172.16.130.31/cgi-bin/srun_portal";
+    // 用户查询的API地址
+    private static final String RAD_USER_INFO = "http://172.16.130.31/cgi-bin/rad_user_info";
     // 网络请求的固定参数N
     private static final int N = 200;
     // 认证服务的ID（acid）
@@ -148,7 +150,7 @@ public class LoginLogout {
         return "{SRBX1}" + Base64.customB64encode(enBytes);
     }
 
-    /***
+    /**
      * 构建登录URL
      */
     private static String buildLoginUrl(String username, String hmd5, String clientIp, String info, String chksum) throws UnsupportedEncodingException {
@@ -167,6 +169,14 @@ public class LoginLogout {
     }
 
     /**
+     * 构建查询用户URL
+     */
+    private static String buildInfoUrl() {
+        return RAD_USER_INFO + "?callback=sdu"
+                + "&_=" + (System.currentTimeMillis() / 1000); // 时间戳参数
+    }
+
+    /**
      * 构建注销URL
      */
     private static String buildLogoutUrl(String username, String clientIp) throws UnsupportedEncodingException {
@@ -177,6 +187,7 @@ public class LoginLogout {
                 + "&ac_id=" + AC_ID
                 + "&_=" + (System.currentTimeMillis() / 1000); // 时间戳参数
     }
+
 
     /***
      * 发送HTTP GET请求
@@ -196,6 +207,22 @@ public class LoginLogout {
             }
             return response.toString(); // 返回完整响应字符串
         }
+    }
+
+    /**
+     * 获取用户在线详细信息
+     */
+    public static Map<String, Object> getRadUserInfo() {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            String url = buildInfoUrl();
+            String response = sendGetRequest(url);
+            result = parseJsonp(response);
+        } catch (Exception e) {
+            result.put("error", e.getMessage());
+            result.put("ecode", -1);
+        }
+        return result;
     }
 
     /***

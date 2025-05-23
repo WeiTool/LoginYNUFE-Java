@@ -34,6 +34,9 @@ public class Account {
     @ColumnInfo(name = "is_logged_in")
     private boolean isLoggedIn;
 
+    @ColumnInfo(name = "online_devices")
+    private int onlineDevices = 0;
+
     @ColumnInfo(name = "logs")
     private List<String> logs = new ArrayList<>();
 
@@ -86,6 +89,14 @@ public class Account {
 
     public List<String> getLogs() {
         return logs;
+    }
+
+    public int getOnlineDevices() {
+        return onlineDevices;
+    }
+
+    public void setOnlineDevices(int onlineDevices) {
+        this.onlineDevices = onlineDevices;
     }
 
     public void addLoginLog(Map<String, Object> result) {

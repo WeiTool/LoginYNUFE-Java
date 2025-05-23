@@ -47,7 +47,7 @@ public class AccountAdapter extends RecyclerView.Adapter<AccountAdapter.ViewHold
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position, @NonNull List<Object> payloads) {
         Account account = accounts.get(position);
-        bindBaseData(holder, account); // 统一使用参数 `account` 保证数据一致性
+        bindBaseData(holder, account);
 
         // 局部更新逻辑
         if (!payloads.isEmpty()) {
@@ -57,11 +57,11 @@ public class AccountAdapter extends RecyclerView.Adapter<AccountAdapter.ViewHold
                             ? "IP: " + account.getClientIp()
                             : "IP: 未获取";
                     holder.tvIp.setText(ipDisplay);
+                    holder.tvOnlineDevices.setText("总在线设备：" + account.getOnlineDevices());
                 }
             }
         }
 
-        // 关键修复：在 payload 版本中重新绑定点击事件
         setupClickListeners(holder, position, account);
     }
 
@@ -72,6 +72,7 @@ public class AccountAdapter extends RecyclerView.Adapter<AccountAdapter.ViewHold
                 ? "IP: " + account.getClientIp()
                 : "IP: 未获取";
         holder.tvIp.setText(ipDisplay);
+        holder.tvOnlineDevices.setText("总在线设备：" + account.getOnlineDevices());
     }
 
     private void setupClickListeners(ViewHolder holder, int position, Account account) {
@@ -89,7 +90,7 @@ public class AccountAdapter extends RecyclerView.Adapter<AccountAdapter.ViewHold
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        public TextView tvUsername, tvRegion, tvIp;
+        public TextView tvUsername, tvRegion, tvIp ,tvOnlineDevices;
         public MaterialButton btnLogin, btnLogout;
         public ImageButton btnDelete, btnLogs;
 
@@ -98,6 +99,7 @@ public class AccountAdapter extends RecyclerView.Adapter<AccountAdapter.ViewHold
             tvUsername = itemView.findViewById(R.id.tvUsername);
             tvRegion = itemView.findViewById(R.id.tvRegion);
             tvIp = itemView.findViewById(R.id.tvIp);
+            tvOnlineDevices = itemView.findViewById(R.id.tvOnlineDevices);
             btnLogin = itemView.findViewById(R.id.btnLogin);
             btnLogout = itemView.findViewById(R.id.btnLogout);
             btnDelete = itemView.findViewById(R.id.btn_delete);
