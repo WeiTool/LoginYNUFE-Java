@@ -37,8 +37,17 @@ public class AccountDialog extends Dialog {
         RadioButton rbYNufe = findViewById(R.id.rbYNufe);
         Button btnSave = findViewById(R.id.btnSave);
 
-        // 编辑模式下设置默认选中项
+
         if (isEditMode && existingAccount != null) {
+            // 从 username 中提取学号（去掉@后缀）
+            String username = existingAccount.getUsername();
+            String studentId = username.split("@")[0]; // 分割字符串获取学号
+            etStudentId.setText(studentId);
+
+            // 填充密码
+            etPassword.setText(existingAccount.getPassword());
+
+            // 设置区域选中状态（原有逻辑）
             String region = existingAccount.getRegion();
             if (region.equals("宿舍区域")) {
                 rbCTC.setChecked(true);
@@ -74,12 +83,18 @@ public class AccountDialog extends Dialog {
             String suffix = region.equals("宿舍区域") ? "@ctc" : "@ynufe";
             String username = studentId + suffix;
 
-            // 创建新账户对象
-            Account newAccount = new Account(username, password, region);
-
-            // 编辑模式时保留登录状态
+            // 创建或更新账户对象
+            Account newAccount;
             if (isEditMode && existingAccount != null) {
+                // 使用带ID的构造函数，保留原有ID
+                newAccount = new Account(username, password, region, existingAccount.getId());
+                // 同步其他需要保留的字段（如登录状态、IP、在线设备数等）
                 newAccount.setLoggedIn(existingAccount.isLoggedIn());
+                newAccount.setClientIp(existingAccount.getClientIp());
+                newAccount.setOnlineDevices(existingAccount.getOnlineDevices());
+                newAccount.setLogs(existingAccount.getLogs());
+            } else {
+                newAccount = new Account(username, password, region);
             }
 
             // 回调保存逻辑

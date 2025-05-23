@@ -2,6 +2,7 @@ package com.srun.loginynufe.model;
 
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
+import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 import androidx.room.TypeConverters;
 
@@ -20,13 +21,13 @@ public class Account {
     private int id;
 
     @ColumnInfo(name = "username")
-    private final String username;
+    private String username;
 
     @ColumnInfo(name = "encrypted_password")
-    private final String password;
+    private String password;
 
     @ColumnInfo(name = "region")
-    private final String region;
+    private String region;
 
     @ColumnInfo(name = "client_ip")
     private String clientIp;
@@ -40,13 +41,27 @@ public class Account {
     @ColumnInfo(name = "logs")
     private List<String> logs = new ArrayList<>();
 
+    // Room 使用的无参构造函数
+    public Account() {}
+
+    // 带所有字段的构造函数（被 @Ignore 标记，避免冲突）
+    @Ignore
+    public Account(String username, String password, String region, int id) {
+        this.username = username;
+        this.password = password;
+        this.region = region;
+        this.id = id;
+    }
+
+    // 常用构造函数（被 @Ignore 标记）
+    @Ignore
     public Account(String username, String password, String region) {
         this.username = username;
         this.password = password;
         this.region = region;
-        this.isLoggedIn = false;
     }
 
+    // 自动生成的 getter 和 setter
     public int getId() {
         return id;
     }
@@ -59,12 +74,24 @@ public class Account {
         return username;
     }
 
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
     public String getPassword() {
         return password;
     }
 
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
     public String getRegion() {
         return region;
+    }
+
+    public void setRegion(String region) {
+        this.region = region;
     }
 
     public boolean isLoggedIn() {
