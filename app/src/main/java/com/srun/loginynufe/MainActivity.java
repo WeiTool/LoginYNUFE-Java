@@ -99,11 +99,10 @@ public class MainActivity extends AppCompatActivity implements AccountAdapter.On
                 updatedAccount -> AppExecutors.get().diskIO().execute(() -> {
                     accountDao.update(updatedAccount);
                     AppExecutors.get().mainThread().execute(() -> {
-                        // 找到账户在列表中的位置
                         int index = accounts.indexOf(account);
                         if (index != -1) {
-                            accounts.set(index, updatedAccount); // 更新列表数据
-                            adapter.notifyItemChanged(index); // 局部刷新
+                            accounts.set(index, updatedAccount);
+                            adapter.notifyItemChanged(index);
                         }
                     });
                 }),

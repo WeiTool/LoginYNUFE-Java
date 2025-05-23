@@ -11,7 +11,9 @@
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="学号">
+        android:hint="学号"
+        app:boxStrokeColor="@color/accent_color"
+        app:hintTextColor="@color/accent_color">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etStudentId"
@@ -26,8 +28,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:hint="密码"
-        app:endIconMode="password_toggle">
+        android:hint="@string/password"
+        app:endIconMode="password_toggle"
+        app:boxStrokeColor="@color/accent_color"
+        app:hintTextColor="@color/accent_color">>
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etPassword"
@@ -38,11 +42,29 @@
     </com.google.android.material.textfield.TextInputLayout>
 
     <!-- 区域选择 -->
-    <Spinner
-        android:id="@+id/spinnerRegion"
+    <RadioGroup
+        android:id="@+id/radioGroupRegion"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp" />
+        android:layout_marginTop="16dp"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <RadioButton
+            android:id="@+id/rbCTC"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="宿舍区域"
+            android:layout_marginEnd="16dp"
+            app:buttonTint="@color/radio_button_color"/>
+
+        <RadioButton
+            android:id="@+id/rbYNufe"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="教学区域"
+            app:buttonTint="@color/radio_button_color"/>
+    </RadioGroup>
 
     <!-- 保存按钮 -->
     <Button
@@ -50,6 +72,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="保存" />
+        android:text="保存"
+        android:backgroundTint="@color/button_color"/>
 
 </LinearLayout>

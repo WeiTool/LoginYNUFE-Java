@@ -4,5 +4,7 @@
     <color name="white">#FFFFFFFF</color>
     <color name="red">#FF0000</color>
     <color name="green">#00CD00</color>
-    <color name="card_grey">#F5F5F5</color>
+    <color name="background_color">#F7FBFc</color>
+    <color name="button_color">#769FCD</color>
+    <color name="accent_color">#B9D7EA</color>
 </resources>

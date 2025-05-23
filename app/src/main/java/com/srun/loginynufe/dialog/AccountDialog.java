@@ -4,9 +4,9 @@ import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.Spinner;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import com.google.android.material.textfield.TextInputEditText;
 import com.srun.loginynufe.R;
 import com.srun.loginynufe.model.Account;
@@ -14,7 +14,8 @@ import com.srun.loginynufe.model.Account;
 public class AccountDialog extends Dialog {
     private final OnSaveListener listener;
     private TextInputEditText etStudentId, etPassword;
-    private Spinner spinnerRegion;
+    private RadioGroup radioGroupRegion;
+    private RadioButton rbCTC, rbYNufe;
     private final boolean isEditMode;
     private final Account existingAccount;
 
@@ -32,31 +33,35 @@ public class AccountDialog extends Dialog {
 
         etStudentId = findViewById(R.id.etStudentId);
         etPassword = findViewById(R.id.etPassword);
-        spinnerRegion = findViewById(R.id.spinnerRegion);
+        radioGroupRegion = findViewById(R.id.radioGroupRegion);
+        rbCTC = findViewById(R.id.rbCTC);
+        rbYNufe = findViewById(R.id.rbYNufe);
         Button btnSave = findViewById(R.id.btnSave);
 
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
-                getContext(),
-                R.array.regions,
-                android.R.layout.simple_spinner_item
-        );
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerRegion.setAdapter(adapter);
-
+        // 编辑模式下设置默认选中项
         if (isEditMode && existingAccount != null) {
-            String studentId = existingAccount.getUsername().split("@")[0];
-            etStudentId.setText(studentId);
-            etPassword.setText(existingAccount.getPassword());
-            ArrayAdapter adapterSpinner = (ArrayAdapter) spinnerRegion.getAdapter();
-            int position = adapterSpinner.getPosition(existingAccount.getRegion());
-            spinnerRegion.setSelection(position);
+            String region = existingAccount.getRegion();
+            if (region.equals("宿舍区域")) {
+                rbCTC.setChecked(true);
+            } else if (region.equals("教学区域")) {
+                rbYNufe.setChecked(true);
+            }
         }
 
         btnSave.setOnClickListener(v -> {
             String studentId = etStudentId.getText() != null ? etStudentId.getText().toString().trim() : "";
             String password = etPassword.getText() != null ? etPassword.getText().toString().trim() : "";
-            String region = spinnerRegion.getSelectedItem() != null ? spinnerRegion.getSelectedItem().toString() : "";
 
+            // 获取选中的区域
+            String region = "";
+            int selectedId = radioGroupRegion.getCheckedRadioButtonId();
+            if (selectedId == R.id.rbCTC) {
+                region = "宿舍区域";
+            } else if (selectedId == R.id.rbYNufe) {
+                region = "教学区域";
+            }
+
+            // 输入验证
             if (TextUtils.isEmpty(studentId)) {
                 etStudentId.setError("学号不能为空");
                 return;
@@ -66,15 +71,19 @@ public class AccountDialog extends Dialog {
                 return;
             }
 
-            String[] regions = getContext().getResources().getStringArray(R.array.regions);
-            String suffix = region.equals(regions[0]) ? "@ctc" : "@ynufe";
+            // 生成用户名后缀
+            String suffix = region.equals("宿舍区域") ? "@ctc" : "@ynufe";
             String username = studentId + suffix;
+
+            // 创建新账户对象
             Account newAccount = new Account(username, password, region);
 
+            // 编辑模式时保留登录状态
             if (isEditMode && existingAccount != null) {
                 newAccount.setLoggedIn(existingAccount.isLoggedIn());
             }
 
+            // 回调保存逻辑
             listener.onSave(newAccount);
             dismiss();
         });

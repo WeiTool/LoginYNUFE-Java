@@ -15,5 +15,6 @@
         android:id="@+id/btnClearLogs"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="清除日志"/>
+        android:text="清除日志"
+        android:backgroundTint="@color/button_color"/>
 </LinearLayout>
