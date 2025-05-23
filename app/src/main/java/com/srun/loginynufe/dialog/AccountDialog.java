@@ -15,7 +15,6 @@ public class AccountDialog extends Dialog {
     private final OnSaveListener listener;
     private TextInputEditText etStudentId, etPassword;
     private RadioGroup radioGroupRegion;
-    private RadioButton rbCTC, rbYNufe;
     private final boolean isEditMode;
     private final Account existingAccount;
 
@@ -34,8 +33,8 @@ public class AccountDialog extends Dialog {
         etStudentId = findViewById(R.id.etStudentId);
         etPassword = findViewById(R.id.etPassword);
         radioGroupRegion = findViewById(R.id.radioGroupRegion);
-        rbCTC = findViewById(R.id.rbCTC);
-        rbYNufe = findViewById(R.id.rbYNufe);
+        RadioButton rbCTC = findViewById(R.id.rbCTC);
+        RadioButton rbYNufe = findViewById(R.id.rbYNufe);
         Button btnSave = findViewById(R.id.btnSave);
 
         // 编辑模式下设置默认选中项

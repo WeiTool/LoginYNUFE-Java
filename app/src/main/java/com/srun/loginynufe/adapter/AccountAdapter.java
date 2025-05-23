@@ -53,11 +53,16 @@ public class AccountAdapter extends RecyclerView.Adapter<AccountAdapter.ViewHold
         if (!payloads.isEmpty()) {
             for (Object payload : payloads) {
                 if (payload instanceof String && payload.equals("UPDATE_IP_AND_STATUS")) {
-                    String ipDisplay = (account.getClientIp() != null && !account.getClientIp().isEmpty())
-                            ? "IP: " + account.getClientIp()
-                            : "IP: 未获取";
+                    String ipDisplay;
+                    if (account.getClientIp() != null && !account.getClientIp().isEmpty()) {
+                        ipDisplay = holder.itemView.getContext().getString(R.string.ip_format, account.getClientIp());
+                    } else {
+                        ipDisplay = holder.itemView.getContext().getString(R.string.ip_not_available);
+                    }
                     holder.tvIp.setText(ipDisplay);
-                    holder.tvOnlineDevices.setText("总在线设备：" + account.getOnlineDevices());
+                    holder.tvOnlineDevices.setText(
+                            holder.itemView.getContext().getString(R.string.online_devices, account.getOnlineDevices())
+                    );
                 }
             }
         }
@@ -68,11 +73,16 @@ public class AccountAdapter extends RecyclerView.Adapter<AccountAdapter.ViewHold
     private void bindBaseData(ViewHolder holder, Account account) {
         holder.tvUsername.setText(account.getUsername().split("@")[0]);
         holder.tvRegion.setText(account.getRegion());
-        String ipDisplay = (account.getClientIp() != null && !account.getClientIp().isEmpty())
-                ? "IP: " + account.getClientIp()
-                : "IP: 未获取";
+        String ipDisplay;
+        if (account.getClientIp() != null && !account.getClientIp().isEmpty()) {
+            ipDisplay = holder.itemView.getContext().getString(R.string.ip_format, account.getClientIp());
+        } else {
+            ipDisplay = holder.itemView.getContext().getString(R.string.ip_not_available);
+        }
         holder.tvIp.setText(ipDisplay);
-        holder.tvOnlineDevices.setText("总在线设备：" + account.getOnlineDevices());
+        holder.tvOnlineDevices.setText(
+                holder.itemView.getContext().getString(R.string.online_devices, account.getOnlineDevices())
+        );
     }
 
     private void setupClickListeners(ViewHolder holder, int position, Account account) {

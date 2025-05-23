@@ -10,4 +10,7 @@
     <string name="confirm">确定</string>
     <string name="cancel">取消</string>
     <string name="password">密码</string>
+    <string name="online_devices">总在线设备：%d</string>
+    <string name="ip_format">IP: %s</string>
+    <string name="ip_not_available">IP: 未获取</string>
 </resources>

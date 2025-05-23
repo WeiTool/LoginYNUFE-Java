@@ -1,16 +1,13 @@
 package com.srun.loginynufe;
 
 import android.app.AlertDialog;
-import android.icu.text.IDNA;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.srun.loginynufe.adapter.AccountAdapter;
 import com.srun.loginynufe.data.AppDatabase;
@@ -21,7 +18,6 @@ import com.srun.loginynufe.model.Account;
 import com.srun.loginynufe.adapter.LogsAdapter;
 import com.srun.loginynufe.utils.AppExecutors;
 import com.srun.loginynufe.utils.VersionChecker;
-
 import java.util.List;
 import java.util.Map;
 
@@ -128,22 +124,46 @@ public class MainActivity extends AppCompatActivity implements AccountAdapter.On
                 });
             });
 
-            AppExecutors.get().networkIO().execute(() ->{
-                Map<String,Object> userInfo = LoginLogout.getRadUserInfo();
-                if (userInfo.containsKey("online_device_total")){
-                    String onlineTotal = (String) userInfo.get("online_device_total");
-                    account.setOnlineDevices(Integer.parseInt(onlineTotal));
+            AppExecutors.get().networkIO().execute(() -> {
+                Map<String, Object> userInfo = LoginLogout.getRadUserInfo();
 
-                    AppExecutors.get().diskIO().execute(() ->{
-                        accountDao.update(account);
-                        AppExecutors.get().mainThread().execute(() ->{
-                            int index = accounts.indexOf(account);
-                            if (index != -1) {
-                                adapter.notifyItemChanged(index);
-                            }
-                        });
-                    });
+                if (userInfo != null && userInfo.containsKey("online_device_total")) {
+                    Object value = userInfo.get("online_device_total");
+                    if (value instanceof String) {
+                        String onlineTotal = (String) value;
+                        try {
+                            int onlineDevices = Integer.parseInt(onlineTotal);
+                            account.setOnlineDevices(onlineDevices);
+                        } catch (NumberFormatException e) {
+                            // 解析失败时设为默认值0
+                            account.setOnlineDevices(0);
+                            AppExecutors.get().mainThread().execute(() ->
+                                    Toast.makeText(
+                                            MainActivity.this,
+                                            "在线设备数解析失败",
+                                            Toast.LENGTH_SHORT
+                                    ).show()
+                            );
+                        }
+                    } else {
+                        // 值类型不匹配时设为默认值0
+                        account.setOnlineDevices(0);
+                    }
+                } else {
+                    // 键不存在或userInfo为null时设为默认值0
+                    account.setOnlineDevices(0);
                 }
+
+                // 更新数据库并刷新UI
+                AppExecutors.get().diskIO().execute(() -> {
+                    accountDao.update(account);
+                    AppExecutors.get().mainThread().execute(() -> {
+                        int index = accounts.indexOf(account);
+                        if (index != -1) {
+                            adapter.notifyItemChanged(index);
+                        }
+                    });
+                });
             });
         });
     }
@@ -153,11 +173,17 @@ public class MainActivity extends AppCompatActivity implements AccountAdapter.On
     public void onLogoutClick(Account account) {
         LoginLogout.performLogout(account, result -> {
             account.addLogoutLog(result);
+
+            account.setClientIp(""); // IP置空
+            int currentDevices = account.getOnlineDevices();
+            account.setOnlineDevices(Math.max(currentDevices - 1, 0)); // 确保不小于0
+
             AppExecutors.get().diskIO().execute(() -> {
                 accountDao.update(account);
                 AppExecutors.get().mainThread().execute(() -> {
                     int index = accounts.indexOf(account);
                     if (index != -1) {
+                        // 强制通知数据变更，触发局部更新
                         adapter.notifyItemChanged(index, "UPDATE_IP_AND_STATUS");
                     }
                     showToast(result, "登出成功", "登出失败");
@@ -226,10 +252,30 @@ public class MainActivity extends AppCompatActivity implements AccountAdapter.On
 
     // 显示Toast提示
     private void showToast(Map<String, Object> result, String successPrefix, String failPrefix) {
-        String message = getStringFromMap(result, "toast_message",
-                "ok".equalsIgnoreCase(getStringFromMap(result, "error", "")) ?
-                        successPrefix : failPrefix
-        );
+        String error = getStringFromMap(result, "error", "").toLowerCase();
+        String sucMsg = getStringFromMap(result, "suc_msg", "").toLowerCase();
+
+        String message;
+
+        // 1. 特定错误处理：IP已在线
+        if (sucMsg.contains("ip_already_online_error")) {
+            message = "当前IP已经在线";
+        }
+        // 2. 特定错误处理：无法连接校园网
+        else if (error.contains("failed to connect to /172.16.130.31:80")) {
+            message = "请连接校园网并确保可以访问登录页面";
+        }
+        // 3. 特定错误处理：欠费
+        else if (sucMsg.contains("e2901: (third party -1)status_err")) {
+            message = "该账户已欠费";
+        }
+        // 其他情况
+        else {
+            message = getStringFromMap(result, "toast_message",
+                    "ok".equalsIgnoreCase(error) ? successPrefix : failPrefix
+            );
+        }
+
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 

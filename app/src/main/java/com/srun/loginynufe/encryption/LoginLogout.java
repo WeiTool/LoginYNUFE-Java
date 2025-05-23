@@ -86,12 +86,15 @@ public class LoginLogout {
 
             // 获取挑战令牌和服务器IP
             Map<String, String> challengeData = getChallenge(username, clientIp);
-            String token = challengeData.get("challenge"); // 从响应中提取token
+            String token = challengeData.get("challenge");
+            if (token == null || token.isEmpty()) {
+                throw new IOException("无法获取挑战令牌（challenge）");
+            }
             String updatedIp = challengeData.get("online_ip"); // 从响应中提取IP
 
             // 检查IP是否需要更新
-            if (!updatedIp.equals(clientIp)) {
-                clientIp = updatedIp; // 更新客户端IP
+            if (!Objects.equals(updatedIp, clientIp)) {
+                clientIp = (updatedIp != null) ? updatedIp : clientIp;
             }
 
             // 加密处理
@@ -141,6 +144,7 @@ public class LoginLogout {
     private static String getInfo(String username, String password, String ip, String token) {
         // 构造JSON格式的原始信息
         String infoJson = String.format(
+                Locale.US, // 显式指定 Locale.US
                 "{\"username\":\"%s\",\"password\":\"%s\",\"ip\":\"%s\",\"acid\":%d,\"enc_ver\":\"%s\"}",
                 username, password, ip, AC_ID, ENC_VER
         );
