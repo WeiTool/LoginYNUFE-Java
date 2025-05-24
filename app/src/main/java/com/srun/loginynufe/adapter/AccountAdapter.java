@@ -5,11 +5,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.google.android.material.button.MaterialButton;
 import com.srun.loginynufe.R;
 import com.srun.loginynufe.model.Account;
+
 import java.util.List;
 
 public class AccountAdapter extends RecyclerView.Adapter<AccountAdapter.ViewHolder> {
@@ -18,9 +21,13 @@ public class AccountAdapter extends RecyclerView.Adapter<AccountAdapter.ViewHold
 
     public interface OnItemClickListener {
         void onItemClick(Account account);
+
         void onLoginClick(Account account);
+
         void onLogoutClick(Account account);
+
         void onDeleteClick(int position);
+
         void onShowLogsClick(Account account);
     }
 
@@ -100,7 +107,7 @@ public class AccountAdapter extends RecyclerView.Adapter<AccountAdapter.ViewHold
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        public TextView tvUsername, tvRegion, tvIp ,tvOnlineDevices;
+        public TextView tvUsername, tvRegion, tvIp, tvOnlineDevices;
         public MaterialButton btnLogin, btnLogout;
         public ImageButton btnDelete, btnLogs;
 

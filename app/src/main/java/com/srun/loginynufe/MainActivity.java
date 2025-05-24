@@ -5,9 +5,11 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.srun.loginynufe.adapter.AccountAdapter;
 import com.srun.loginynufe.data.AppDatabase;
@@ -18,6 +20,7 @@ import com.srun.loginynufe.model.Account;
 import com.srun.loginynufe.adapter.LogsAdapter;
 import com.srun.loginynufe.utils.AppExecutors;
 import com.srun.loginynufe.utils.VersionChecker;
+
 import java.util.List;
 import java.util.Map;
 
@@ -289,7 +292,7 @@ public class MainActivity extends AppCompatActivity implements AccountAdapter.On
                 .show();
     }
 
-// 安全获取 Map 中的字符串（修复空指针问题）
+    // 安全获取 Map 中的字符串（修复空指针问题）
     private String getStringFromMap(Map<String, Object> map, String key, String defaultValue) {
         if (map == null || !map.containsKey(key)) {
             return defaultValue; // Map 为 null 或键不存在时返回默认值

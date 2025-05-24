@@ -1,6 +1,7 @@
 package com.srun.loginynufe.encryption;
 
 import com.google.gson.reflect.TypeToken;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -8,6 +9,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.Executor;
+
 import com.google.gson.Gson;
 import com.srun.loginynufe.model.Account;
 import com.srun.loginynufe.utils.AppExecutors;
@@ -73,6 +75,7 @@ public class LoginLogout {
     public interface OnLogoutListener {
         void onLogoutResult(Map<String, Object> result);
     }
+
     /***
      * 登录认证核心逻辑
      */
@@ -237,7 +240,8 @@ public class LoginLogout {
             if (jsonp.startsWith("sdu(") && jsonp.endsWith(")")) {
                 String jsonStr = jsonp.substring(4, jsonp.length() - 1);
                 // 直接解析为结构化Map
-                return new Gson().fromJson(jsonStr, new TypeToken<Map<String, Object>>(){}.getType());
+                return new Gson().fromJson(jsonStr, new TypeToken<Map<String, Object>>() {
+                }.getType());
             }
             return Collections.singletonMap("error", "Invalid JSONP format");
         } catch (Exception e) {

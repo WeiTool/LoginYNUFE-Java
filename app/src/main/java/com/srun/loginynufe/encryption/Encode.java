@@ -10,11 +10,12 @@ public class Encode {
 
     /**
      * 将字符串转换为32位无符号整数数组（小端序）
-     * @param a 输入字符串
+     *
+     * @param a         输入字符串
      * @param addLength 是否在数组末尾添加原始字符串长度
      * @return 32位整型列表
      */
-    public static List<Long> s(String a, boolean addLength) {
+    public static List<Long> mix(String a, boolean addLength) {
         int c = a.length();
         List<Long> v = new ArrayList<>();
 
@@ -38,11 +39,12 @@ public class Encode {
 
     /**
      * 将32位整数列表转换为二进制数据（小端序）
-     * @param a 整数列表
+     *
+     * @param a        整数列表
      * @param truncate 是否根据记录的原始长度截断
      * @return 二进制字节数组
      */
-    public static byte[] l(List<Long> a, boolean truncate) {
+    public static byte[] dmix(List<Long> a, boolean truncate) {
         ByteBuffer buffer = ByteBuffer.allocate(a.size() * 4);
         buffer.order(ByteOrder.LITTLE_ENDIAN); // 小端序
 
@@ -68,14 +70,15 @@ public class Encode {
 
     /**
      * 执行加密运算（变种XXTEA算法）
+     *
      * @param str 待加密字符串
      * @param key 加密密钥
      * @return 加密后的二进制数据
      */
     public static byte[] encode(String str, String key) {
         // 1. 数据预处理
-        List<Long> v = s(str, true);
-        List<Long> k = s(key, false);
+        List<Long> v = mix(str, true);
+        List<Long> k = mix(key, false);
 
         // 补全密钥长度至4
         while (k.size() < 4) {
@@ -121,6 +124,6 @@ public class Encode {
         }
 
         // 4. 转换为二进制数据
-        return l(v, false);
+        return dmix(v, false);
     }
 }

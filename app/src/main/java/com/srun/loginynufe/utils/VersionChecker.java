@@ -12,18 +12,23 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
+
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 //===========================应用版本检测工具类=============================
+
 /**
  * 功能：实现应用版本检测与更新引导功能
  * 核心职责：
@@ -39,6 +44,7 @@ public class VersionChecker {
     private static final String TARGET_APK_NAME = "LoginYnufe.apk";
 
     //===========================嵌套数据结构=============================
+
     /**
      * Gitee发行版数据结构
      */
@@ -56,8 +62,10 @@ public class VersionChecker {
     }
 
     //===========================公开接口模块=============================
+
     /**
      * 功能：启动版本检查流程
+     *
      * @param context 上下文对象（需为Activity上下文）
      */
     public static void checkNewVersion(Context context) {
@@ -79,9 +87,11 @@ public class VersionChecker {
     }
 
     //===========================数据处理模块=============================
+
     /**
      * 功能：处理API响应数据
-     * @param context 上下文对象
+     *
+     * @param context  上下文对象
      * @param response 网络响应对象
      */
     private static void processApiResponse(Context context, Response response) throws Exception {
@@ -92,7 +102,8 @@ public class VersionChecker {
 
         String json = response.body().string();
         Log.d(TAG, "原始响应数据：" + json);
-        Type listType = new TypeToken<List<Release>>(){}.getType();
+        Type listType = new TypeToken<List<Release>>() {
+        }.getType();
         List<Release> releases = new Gson().fromJson(json, listType);
 
         if (releases == null || releases.isEmpty()) return;
@@ -102,7 +113,8 @@ public class VersionChecker {
 
     /**
      * 功能：遍历处理所有发行版数据
-     * @param context 上下文对象
+     *
+     * @param context  上下文对象
      * @param releases 发行版列表
      */
     private static void findValidRelease(Context context, List<Release> releases) throws PackageManager.NameNotFoundException {
@@ -124,8 +136,10 @@ public class VersionChecker {
     }
 
     //===========================核心算法模块=============================
+
     /**
      * 功能：在资源列表中查找目标APK下载地址
+     *
      * @param assets 资源列表
      * @return 匹配的APK下载地址，未找到返回null
      */
@@ -141,8 +155,9 @@ public class VersionChecker {
 
     /**
      * 功能：版本号比较逻辑
+     *
      * @param remote 远程版本号（如V1.1.0）
-     * @param local 本地版本号（如1.0.0）
+     * @param local  本地版本号（如1.0.0）
      * @return 远程版本是否较新
      */
     private static boolean isNewVersion(String remote, @NonNull String local) {
@@ -167,6 +182,7 @@ public class VersionChecker {
 
     /**
      * 功能：解析版本号分段
+     *
      * @param part 版本号分段字符串
      * @return 转换为整数的分段值，转换失败返回0
      */
@@ -179,10 +195,12 @@ public class VersionChecker {
     }
 
     //===========================用户交互模块=============================
+
     /**
      * 功能：显示版本更新对话框
-     * @param context 上下文对象
-     * @param release 发行版数据
+     *
+     * @param context     上下文对象
+     * @param release     发行版数据
      * @param downloadUrl 下载地址
      */
     private static void showUpdateDialog(Context context, Release release, String downloadUrl) {
@@ -202,9 +220,11 @@ public class VersionChecker {
         });
     }
 //===========================浏览器操作模块=============================
+
     /**
      * 功能：通过浏览器选择器打开下载链接
-     * @param context 上下文对象
+     *
+     * @param context     上下文对象
      * @param downloadUrl APK下载地址
      */
     @SuppressLint("QueryPermissionsNeeded")

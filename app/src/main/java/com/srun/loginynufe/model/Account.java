@@ -14,6 +14,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
 @Entity(tableName = "accounts")
 @TypeConverters(ListConverter.class)
 public class Account {
@@ -41,10 +42,9 @@ public class Account {
     @ColumnInfo(name = "logs")
     private List<String> logs = new ArrayList<>();
 
-    // Room 使用的无参构造函数
-    public Account() {}
+    public Account() {
+    }
 
-    // 带所有字段的构造函数（被 @Ignore 标记，避免冲突）
     @Ignore
     public Account(String username, String password, String region, int id) {
         this.username = username;
@@ -53,7 +53,6 @@ public class Account {
         this.id = id;
     }
 
-    // 常用构造函数（被 @Ignore 标记）
     @Ignore
     public Account(String username, String password, String region) {
         this.username = username;
@@ -61,7 +60,6 @@ public class Account {
         this.region = region;
     }
 
-    // 自动生成的 getter 和 setter
     public int getId() {
         return id;
     }
