@@ -13,4 +13,18 @@
     <string name="online_devices">总在线设备：%d</string>
     <string name="ip_format">IP: %s</string>
     <string name="ip_not_available">IP: 未获取</string>
+    <string name="delete_desc">删除卡片</string>
+    <string name="logs_desc">卡片日志</string>
+    <string name="login">登录</string>
+    <string name="logout">退出</string>
+    <string name="clear_logs">清除日志</string>
+    <string name="clear_logs_desc">清除所有日志记录</string>
+    <string name="student_id">学号</string>
+    <string name="dormitory_area">宿舍区域</string>
+    <string name="dormitory_area_desc">选择宿舍区域网络</string>
+    <string name="teaching_area">教学区域</string>
+    <string name="teaching_area_desc">选择教学区域网络</string>
+    <string name="save">保存</string>
+    <string name="save_desc">保存账号信息</string>
+    <string name="delete_all">清空全部</string>
 </resources>

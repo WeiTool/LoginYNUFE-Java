@@ -1,5 +1,7 @@
 package com.srun.loginynufe.adapter;
 
+import android.content.Context;
+import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -7,32 +9,29 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButton;
 import com.srun.loginynufe.R;
 import com.srun.loginynufe.model.Account;
+import com.srun.loginynufe.utils.AccountDiffCallback;
 
 import java.util.List;
 
-public class AccountAdapter extends RecyclerView.Adapter<AccountAdapter.ViewHolder> {
-    private final List<Account> accounts;
+public class AccountAdapter extends ListAdapter<Account, AccountAdapter.ViewHolder> {
     private final OnItemClickListener listener;
 
     public interface OnItemClickListener {
         void onItemClick(Account account);
-
         void onLoginClick(Account account);
-
         void onLogoutClick(Account account);
-
-        void onDeleteClick(int position);
-
+        void onDeleteClick(Account account);
         void onShowLogsClick(Account account);
     }
 
-    public AccountAdapter(List<Account> accounts, OnItemClickListener listener) {
-        this.accounts = accounts;
+    public AccountAdapter(OnItemClickListener listener) {
+        super(new AccountDiffCallback());
         this.listener = listener;
     }
 
@@ -46,64 +45,62 @@ public class AccountAdapter extends RecyclerView.Adapter<AccountAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Account account = accounts.get(position);
+        Account account = getItem(position);
         bindBaseData(holder, account);
-        setupClickListeners(holder, position, account);
+        setupClickListeners(holder, account);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position, @NonNull List<Object> payloads) {
-        Account account = accounts.get(position);
-        bindBaseData(holder, account);
-
-        // 局部更新逻辑
-        if (!payloads.isEmpty()) {
-            for (Object payload : payloads) {
-                if (payload instanceof String && payload.equals("UPDATE_IP_AND_STATUS")) {
-                    String ipDisplay;
-                    if (account.getClientIp() != null && !account.getClientIp().isEmpty()) {
-                        ipDisplay = holder.itemView.getContext().getString(R.string.ip_format, account.getClientIp());
-                    } else {
-                        ipDisplay = holder.itemView.getContext().getString(R.string.ip_not_available);
-                    }
-                    holder.tvIp.setText(ipDisplay);
-                    holder.tvOnlineDevices.setText(
-                            holder.itemView.getContext().getString(R.string.online_devices, account.getOnlineDevices())
-                    );
-                }
-            }
+        if (payloads.isEmpty()) {
+            onBindViewHolder(holder, position);
+            return;
         }
 
-        setupClickListeners(holder, position, account);
+        Account account = getItem(position);
+        Bundle payload = (Bundle) payloads.get(0);
+
+        // 局部更新逻辑
+        Context context = holder.itemView.getContext();
+        if (payload.containsKey("UPDATE_IP")) {
+            String ipDisplay = formatIp(account.getClientIp(), context);
+            holder.tvIp.setText(ipDisplay);
+        }
+        if (payload.containsKey("UPDATE_DEVICES")) {
+            holder.tvOnlineDevices.setText(formatDevices(account.getOnlineDevices(), context));
+        }
     }
 
     private void bindBaseData(ViewHolder holder, Account account) {
+        Context context = holder.itemView.getContext();
         holder.tvUsername.setText(account.getUsername().split("@")[0]);
         holder.tvRegion.setText(account.getRegion());
-        String ipDisplay;
-        if (account.getClientIp() != null && !account.getClientIp().isEmpty()) {
-            ipDisplay = holder.itemView.getContext().getString(R.string.ip_format, account.getClientIp());
-        } else {
-            ipDisplay = holder.itemView.getContext().getString(R.string.ip_not_available);
-        }
-        holder.tvIp.setText(ipDisplay);
-        holder.tvOnlineDevices.setText(
-                holder.itemView.getContext().getString(R.string.online_devices, account.getOnlineDevices())
-        );
+        holder.tvIp.setText(formatIp(account.getClientIp(), context));
+        holder.tvOnlineDevices.setText(formatDevices(account.getOnlineDevices(), context));
     }
 
-    private void setupClickListeners(ViewHolder holder, int position, Account account) {
-        // 绑定最新数据和位置
+    private void setupClickListeners(ViewHolder holder, Account account) {
+        holder.btnDelete.setOnClickListener(v -> {
+            int pos = holder.getBindingAdapterPosition();
+            if (pos != RecyclerView.NO_POSITION) {
+                listener.onDeleteClick(getItem(pos));
+            }
+        });
         holder.btnLogin.setOnClickListener(v -> listener.onLoginClick(account));
         holder.btnLogout.setOnClickListener(v -> listener.onLogoutClick(account));
-        holder.btnDelete.setOnClickListener(v -> listener.onDeleteClick(position));
         holder.btnLogs.setOnClickListener(v -> listener.onShowLogsClick(account));
         holder.itemView.setOnClickListener(v -> listener.onItemClick(account));
     }
 
-    @Override
-    public int getItemCount() {
-        return accounts.size();
+    // 新增Context参数解决holder作用域问题
+    private String formatIp(String ip, Context context) {
+        return (ip != null && !ip.isEmpty()) ?
+                context.getString(R.string.ip_format, ip) :
+                context.getString(R.string.ip_not_available);
+    }
+
+    private String formatDevices(int count, Context context) {
+        return context.getString(R.string.online_devices, count);
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {

@@ -1,5 +1,6 @@
 package com.srun.loginynufe.data;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
@@ -22,7 +23,7 @@ public interface AccountDao {
     void delete(Account account);
 
     @Query("SELECT * FROM accounts")
-    List<Account> getAll();
+    LiveData<List<Account>> getAll();
 
     @Query("DELETE FROM accounts")
     void deleteAll();
