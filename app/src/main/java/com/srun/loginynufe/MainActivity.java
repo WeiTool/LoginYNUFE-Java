@@ -2,12 +2,15 @@ package com.srun.loginynufe;
 
 import android.app.AlertDialog;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.srun.loginynufe.adapter.AccountAdapter;
 import com.srun.loginynufe.data.AppDatabase;
@@ -19,6 +22,8 @@ import com.srun.loginynufe.adapter.LogsAdapter;
 import com.srun.loginynufe.utils.AppExecutors;
 import com.srun.loginynufe.utils.VersionChecker;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -28,6 +33,7 @@ import java.util.Map;
 public class MainActivity extends AppCompatActivity implements AccountAdapter.OnItemClickListener {
     private AccountAdapter adapter;
     private AccountDao accountDao;
+    private static final String TAG = "MainActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -144,7 +150,9 @@ public class MainActivity extends AppCompatActivity implements AccountAdapter.On
                 try {
                     Thread.sleep(1500);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "登录操作线程中断: " + e.getMessage(), e);
+                    // 恢复中断状态
+                    Thread.currentThread().interrupt();
                 }
 
                 Map<String, Object> userInfo = LoginLogout.getRadUserInfo();
@@ -174,10 +182,12 @@ public class MainActivity extends AppCompatActivity implements AccountAdapter.On
                             if (position != -1) {
                                 adapter.updateItemPartial(position, account, "devices");
                             }
+                            // 使用 Log 记录错误
+                            Log.w(TAG, "在线设备数解析失败: " + e.getMessage(), e);
                             AppExecutors.get().mainThread().execute(() ->
                                     Toast.makeText(
                                             MainActivity.this,
-                                            "在线设备数解析失败: " + e.getMessage(),
+                                            "在线设备数解析失败",
                                             Toast.LENGTH_SHORT
                                     ).show()
                             );
@@ -248,17 +258,29 @@ public class MainActivity extends AppCompatActivity implements AccountAdapter.On
         View view = getLayoutInflater().inflate(R.layout.dialog_logs, null);
         RecyclerView rvLogs = view.findViewById(R.id.rvLogs);
         rvLogs.setLayoutManager(new LinearLayoutManager(this));
-        LogsAdapter logsAdapter = new LogsAdapter(account.getLogs());
+
+        // 创建日志列表的副本，避免直接操作原始列表
+        List<String> logsCopy = new ArrayList<>(account.getLogs());
+        LogsAdapter logsAdapter = new LogsAdapter(logsCopy);
         rvLogs.setAdapter(logsAdapter);
 
         Button btnClear = view.findViewById(R.id.btnClearLogs);
-        btnClear.setOnClickListener(v ->
-                AppExecutors.get().diskIO().execute(() -> {
-                    account.getLogs().clear();
-                    accountDao.update(account);
-                    AppExecutors.get().mainThread().execute(() -> Toast.makeText(this, "日志已清除", Toast.LENGTH_SHORT).show());
-                })
-        );
+        btnClear.setOnClickListener(v -> {
+            // 使用适配器的专用清除方法（高效实现）
+            logsAdapter.clearLogs();
+
+            // 在后台更新数据库
+            AppExecutors.get().diskIO().execute(() -> {
+                // 清除原始日志列表
+                account.getLogs().clear();
+                accountDao.update(account);
+
+                // 显示Toast提示
+                AppExecutors.get().mainThread().execute(() ->
+                        Toast.makeText(this, "日志已清除", Toast.LENGTH_SHORT).show()
+                );
+            });
+        });
         builder.setView(view).show();
     }
 

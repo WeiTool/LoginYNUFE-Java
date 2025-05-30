@@ -33,6 +33,17 @@ public class LogsAdapter extends RecyclerView.Adapter<LogsAdapter.ViewHolder> {
     }
 
     /**
+     * 清空日志数据（高效实现）
+     */
+    public void clearLogs() {
+        int oldSize = logs.size();
+        if (oldSize > 0) {
+            logs.clear();
+            notifyItemRangeRemoved(0, oldSize);
+        }
+    }
+
+    /**
      * 创建ViewHolder实例时调用
      *
      * @param parent   父视图组（RecyclerView自身）
